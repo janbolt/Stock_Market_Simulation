@@ -26,23 +26,28 @@ double norminv(double p, double mu, double sigma) {
 }
 
 
+// The following source was used for the geometric brownian motion simulation:
 // https://github.com/0xnu/sps_gbm_ef/blob/main/README.md
+// This function is further explained in the ReadMe.md file provided
 std::vector<double> geometric_brownian_motion(
     double initial_value,
     double variance,
     double years,
     double expected_return)
-{
-    double dt = 1.0 / 365.0;                     // daily steps
-    int N = static_cast<int>(years / dt);
+    {
+    // daily steps -> there are approximately 252 trading days in a year (not 365)  
+    double dt = 1.0 / 252.0;                     
+    int N = static_cast<int>(years / dt + 1);
 
     double sigma = std::sqrt(variance);
 
     std::vector<double> S(N + 1);
     S[0] = initial_value;
 
+    // Noise generation here
     std::default_random_engine generator(std::random_device{}());
     std::normal_distribution<double> normal(0.0, 1.0);
+
 
     for (int i = 1; i <= N; ++i) {
         double dW = normal(generator) * std::sqrt(dt);
@@ -56,16 +61,16 @@ std::vector<double> geometric_brownian_motion(
 }
 
 
-// Function to simulate stock prices using Markov chain
+// Function to simulate stock prices using Exponentioal Moving Average (EMA) and Markov Chain
 std::vector<double> markov_chain(double initial_value, double variance, double years, double expected_return) {
     std::vector<double> y;
     y.push_back(initial_value);
     
-    int days = static_cast<int>(round(365 * years));
-    std::vector<double> EMA(days + 1);
+    int days = static_cast<int>(round(252 * years));
+    std::vector<double> EMA(days+1);
    
     for (int t = 0; t <= days; ++t) {
-        EMA[t] = pow(1 + expected_return, t / 365.0) * initial_value;
+        EMA[t] = pow(1 + expected_return, t / 252.0) * initial_value;
     }
 
     // std::default_random_engine generator;
@@ -89,7 +94,8 @@ std::vector<double> markov_chain(double initial_value, double variance, double y
 
         // Generate a random number
         double p = distribution(generator);        
-        double next_value = (norminv(p, ema, std_dev) + 19*y.back()) / 20; //+ noise_distribution(generator)*std_dev) / (75 + std_dev);
+        // The average is weighted so the volatility corresponds approximately to the variance
+        double next_value = (norminv(p, ema, std_dev) + 19*y.back()) / 20; 
         y.push_back(next_value);
     }
 
@@ -102,6 +108,7 @@ std::vector<double> simulate_stock(double initial_value, double variance, double
     std::vector<double> values;
     values.push_back(initial_value);
     
+    // choice of model to simulate the stock market:
     if (model == 1){
         return markov_chain(initial_value, variance, years, expected_return);
     } else {
@@ -139,37 +146,38 @@ void strategy(InputValues &in) {
 
             for (size_t i = 0; i < in.variance.size(); ++i) {
                 in.custom_allocation[i] = in.variance[i] * norm; 
+        }
         } 
         else{
             std::cerr << "Error: The sum of the variance values is zero. Unable to normalize allocations." << std::endl;
         }
-    }
+        }
+    
 
     if (strategy == 3) {
     // Potential high risk, optimize by expected return, could be part of a long term investment strategy:
     double sum = std::accumulate(in.expected_return.begin(), in.expected_return.end(), 0.0);
     
-    // Prevent division by zero
-    if (sum != 0) {
-        double norm = 1.0 / sum;
-        in.custom_allocation.clear(); // Clear previous allocations
-        in.custom_allocation.resize(in.expected_return.size()); // Resize the vector to hold new values
+        // Prevent division by zero
+        if (sum != 0) {
+            double norm = 1.0 / sum;
+            in.custom_allocation.clear(); // Clear previous allocations
+            in.custom_allocation.resize(in.expected_return.size()); // Resize the vector to hold new values
 
-        for (size_t i = 0; i < in.expected_return.size(); ++i) {
-            in.custom_allocation[i] = in.expected_return[i] * norm; // Multiply each element by the normalization factor
+                for (size_t i = 0; i < in.expected_return.size(); ++i) {
+                    in.custom_allocation[i] = in.expected_return[i] * norm; // Multiply each element by the normalization factor
+                }
+        } else{
+            std::cerr << "Error: The sum of the expected return values is zero. Unable to normalize allocations." << std::endl;
         }
-    } 
-    else{
-        std::cerr << "Error: The sum of the expected return values is zero. Unable to normalize allocations." << std::endl;
     }
-}
 }
 
 
 void simulate_wallet() {
     InputValues in;
     std::map<std::string, std::vector<double>> data;
-    double years = in.time_steps / 365.0;
+    double years = in.time_steps / 252.0;
     double total_profit = 0.0;
 
     strategy(in);
@@ -238,7 +246,6 @@ void simulate_wallet() {
                 output_file << "0,";  
         }
         
-        // // Write profit calculations
         // output_file << total_profit << ",";
         // output_file << (total_profit / in.fund) * 100 << "\n";  
         output_file << "\n";  
