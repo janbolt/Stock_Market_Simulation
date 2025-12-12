@@ -1,0 +1,13 @@
+# Ignores the output file
+*.csv
+
+# Ignores all executables but include gitignore
+*
+!.gitignore
+
+# Ignore vscode directory
+.vscode/
+.qodo/
+
+# Ignore all build directories
+build/
