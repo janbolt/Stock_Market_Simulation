@@ -8,22 +8,19 @@
 class Share {
 public:
     std::string name;
-    double startValue;
+    double initial_value;
     double variance;
     double price_change;
     double expected_return;
-    std::vector<int> shares; 
-    int strategy;
 
-    Share(std::string n, double s, double v, double p, double e, std::vector<int> sh, int strat) 
+    Share(std::string n, double s, double v, double p, double e) 
         : name(n), 
-          startValue(s), 
+          initial_value(s), 
           variance(v),   
           price_change(p), 
-          expected_return(e), 
-          shares(sh),       
-          strategy(strat)   
+          expected_return(e) 
     {}
+
 };
 
 #endif

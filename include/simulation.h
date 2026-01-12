@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 
+#include "share.h"
+#include "wallet.h"
+
 // Structure to hold input values for the stock simulation
 struct InputValues {
     int fund = 4000;
@@ -19,6 +22,12 @@ struct InputValues {
 
     void print() const;
 };
+
+// std::vector<Share> shares = {Share("Google", 5.64, 0.04, 0, 0.10), 
+//     Share("Amazon", 10.9, 0.035, 0, 0.10),
+//     Share("Tesla", 2.09, 0.03, 0, 0.2),
+//     Share("Ferrero", 54.32, 0.045, 0, 0.25)};
+
 
 // for sprint 2 and 3 (for multiple files...): 
 // std::vector<double> markov_chain(double initial_value, double variance, double years, double expected_return);
