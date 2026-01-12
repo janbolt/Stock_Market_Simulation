@@ -102,7 +102,6 @@ std::vector<double> markov_chain(double initial_value, double variance, double y
     return y;
 }
 
-
 // Function to simulate stock prices directly
 std::vector<double> simulate_stock(double initial_value, double variance, double expected_return, double years, int model) {
     std::vector<double> values;
@@ -116,7 +115,6 @@ std::vector<double> simulate_stock(double initial_value, double variance, double
     }
 
 }
-
 
 void strategy(InputValues &in) {
     std::map<std::string, std::vector<double>> data;
@@ -136,16 +134,28 @@ void strategy(InputValues &in) {
 
     if (strategy == 2) {
         // Conservative minimize risk:
-        double sum = std::accumulate(in.variance.begin(), in.variance.end(), 0.0);
+        // std::vector<double> variance = {0.04, 0.035, 0.03, 0.045}; // per year
+
+        std::vector<double> inv_var(in.variance.size()); // Initialize with the same size
+
+        for (size_t i = 0; i < in.variance.size(); ++i) {
+            if (in.variance[i] != 0) { 
+                inv_var[i] = 1.0 / in.variance[i];
+            } else {
+                std::cerr << "Warning: Variance at index " << i << " is zero; setting inverse to zero." << std::endl;
+                inv_var[i] = 0.0; 
+            }
+        }
+        double sum = std::accumulate(inv_var.begin(), inv_var.end(), 0.0);
         
         // Prevent division by zero
         if (sum != 0) {
             double norm = 1.0 / sum;
             in.custom_allocation.clear();
-            in.custom_allocation.resize(in.variance.size()); 
+            in.custom_allocation.resize(inv_var.size()); 
 
-            for (size_t i = 0; i < in.variance.size(); ++i) {
-                in.custom_allocation[i] = in.variance[i] * norm; 
+            for (size_t i = 0; i < inv_var.size(); ++i) {
+                in.custom_allocation[i] = inv_var[i] * norm; 
         }
         } 
         else{
