@@ -16,10 +16,6 @@ public:
 
     void print() const;
 
-    // Wallet(const std::vector<std::string>& n, const std::vector<double>& funds, 
-    //        const std::vector<int>& strats, int numShares)
-    //     : name(n), cash(funds), units(funds.size(), std::vector<double>(numShares, 0.0)), 
-    //       strategy_id(strats) {}
 };
 
 #endif

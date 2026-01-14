@@ -359,8 +359,8 @@ simulate_stocks_with_wallets(double years, int model) {
                     all_expected_returns[s][i-1] = share.expected_return[s] - first_ret[s];
                 }   
 
-                share.variance[s] = share.variance[s]-(investment/fund[i]-share.variance[s])*1e-5; 
-                share.expected_return[s] = share.expected_return[s]-(investment/fund[i])*1e-2; 
+                share.variance[s] = share.variance[s]-(investment/fund[i]-share.variance[s])*1e-6; 
+                share.expected_return[s] = share.expected_return[s]-(investment/fund[i])*1e-3; 
 
                 all_variances[s][i] = share.variance[s] - first_var[s];
                 all_expected_returns[s][i] = share.expected_return[s] - first_ret[s];
