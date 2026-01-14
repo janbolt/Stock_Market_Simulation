@@ -1,3 +1,6 @@
+// the following header is part of sprint 1 and no longer needed for sprint 2!
+
+
 #ifndef SIMULATION_H
 #define SIMULATION_H
 

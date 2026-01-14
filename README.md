@@ -1,7 +1,7 @@
 # Stock Market Simulation
 
 This project provides a C++ framework for simulating stock price movements and portfolio performance over time.  
-All simulation **inputs are defined directly in the `InputValues` struct inside `simulation.h`**, and all simulation **outputs are written to a CSV file** for easy visualization and analysis. The use of input and output files as .h and .csv file will be adjusted to json file in future versions.
+All simulation **inputs are defined directly in the `Wallet`, `Market` and `Share`, structs inside `wallet.h`, `market.h` and `share.h`**, and all simulation **outputs are written to a CSV file** for easy visualization and analysis.
 
 ---
 
@@ -17,32 +17,81 @@ All simulation **inputs are defined directly in the `InputValues` struct inside 
 ## Features
 
 - Simulates multiple stocks using stochastic models  
-- Supports Markov-chain–based and geometric brownian motion price simulations  
-- Portfolio (“wallet”) simulation with customizable allocations  
-- Fully configurable through the `InputValues` structure  
+- Supports geometric brownian motion price simulations  
+- Multi-Wallet simulation with customizable allocations  
+- Fully configurable by the classes in the include folder  
 - Automatically exports results to a CSV file  
 
 ---
 
 ## Example Input Configuration
 
-All input parameters are defined in `InputValues`:
+All input parameters for the stock metrics are defined in `Share`:
 
 ```cpp
-struct InputValues {
-    int fund = 4000;
-    int strategies = 2;
-    std::vector<double> custom_allocation = {0.25, 0.25, 0.25, 0.25};
-    std::vector<std::string> shares = {"Google", "Amazon", "Tesla", "Ferrero"};
-    std::vector<double> variance = {0.04, 0.035, 0.03, 0.045};
-    std::vector<double> expected_return = {0.10, 0.05, 0.2, 0.25};
-    std::vector<double> initial_value = {10.34, 1.92, 5.23, 4.01};
-    int time_steps = 365 * 1;
-    int model = 1;
+#ifndef SHARE_H
+#define SHARE_H
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+class Share {
+public:
+    std::vector<std::string> name = {"Google", "Amazon", "Tesla", "Ferrero"}; 
+    std::vector<double> initial_value = {10, 10, 10, 10};
+    std::vector<double> variance  = {0.04, 0.035, 0.03, 0.045}; 
+    std::vector<double> price_change = {0,0,0,0}; 
+    std::vector<double> expected_return = {0.10, 0.05, 0.2, 0.25}; 
+};
+
+#endif 
+```
+
+All input parameters of the traders are in `Wallet`:
+```cpp
+#ifndef WALLET_H
+#define WALLET_H
+
+#include <string>
+#include <vector>
+
+class Wallet {
+public:
+    // in each vector at position i we have another wallet in units Wallet.units[i][j] we access amount of shares for share i -> i representing share_id
+    std::vector<std::string> name = {"John", "Nick", "Sandra"};
+    std::vector<double> cash_savings = {1000, 1000, 1000};
+    std::vector<std::vector<double>> units = {{10,10,10,10}, {5,10,4,5},{0, 100,40,50}};   
+    std::vector<int> strategy_id = {3,2,1};
+    std::vector<int> trading_frequency = {12, 3, 90}; // average amount of days where a trade was executed in a year (trades are executed at random)
 
     void print() const;
+
 };
+
+#endif
 ```
+
+All input parameters describing the market are in `Market`:
+```cpp
+#ifndef MARKET_H
+#define MARKET_H
+
+#include "share.h"
+#include "wallet.h"
+#include <vector>
+
+class Market {
+public:
+    std::vector<Share> shares;
+    double time_steps = 1*252;
+    double market_optimisim = 0; // value from -1 to 1 and dynamic (changing randomly) representing influence from media and investor confidence. 
+    int size() const { return (int)shares.size(); }
+};
+
+#endif 
+```
+
 # Investment Strategies
 
 ## Fund
@@ -62,10 +111,9 @@ Allocations are made according to the volatility of the shares, investing more i
 ### Strategy 3: Return-Oriented Investment
 This strategy focuses on optimizing stock allocation based on expected returns. Shares with higher expected returns receive a greater percentage of the fund.
 
-### Strategy 4: User-Defined Allocation
-Investors can specify their own stock allocations in the **custom_allocation** section. The total allocation must equal 1.
 
----
+# Important metrics
+
 
 ## Shares
 The **shares** contain names associated with each stock.
@@ -93,9 +141,8 @@ The time step is the amount of days that the stock market was simulated. One yea
 ---
 
 ## Model
-Two **models** where implemented, the first is a model that we have thought of which is based on Marcov-Chains, i.e. the price change is only dependent on the previous time step price. This is done using the Exponential Moving Average (EMA) calculated using the expected return, in addition to noise to represent volatility (based on the variance).
 
-The secound model involces a well established method for stock market simulation, called the geometric brownian motion, the formula for this is defined as: 
+The model implemented involces a well established method for stock market simulation, called the geometric brownian motion, the formula for this is defined as: 
 
 $$
 S_{n+1} = S_n \exp \left( \left( \mu - \frac{\sigma^2}{2} \right) dt + \sigma W_t \right)
@@ -112,8 +159,6 @@ The sources for this formula:
  
  
 ---
-
-
 
 
 # Assigned Project Discription/Task: Simulate trading in a stock market

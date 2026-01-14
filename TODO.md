@@ -55,7 +55,7 @@ In the first sprint, at the beginning of the simulation, the wallets will be ini
                                     // alternatively: "income": 0.23, percentage of income at the end of the simulation
     }
 
-### Further improvements
+### Further improvements (not mandatory)
 The listed tasks are not strictly required for the assignment/sprint!
 - <span style="color:orange;">[ _ ]</span> Allow users to give direct inputs eather in the form of a seperate .json file or using input statetements during runtime.
 - <span style="color:orange;">[ _ ]</span> Replace CSV file by json file to store outputs.
@@ -68,7 +68,7 @@ The listed tasks are not strictly required for the assignment/sprint!
 The objective of the second sprint is, thanks to the use of object-oriented programming, to create different classes for shares, wallets, strategies.Through this code refactoring, it will be possible to create interactions between the market simulation and the wallets simulation. A massive shares purchase in the market will consequentially change the value of the shares themselves. The statistical data concerning the recent market fluctuations and the quotes will be registered, and they can be utilized in the single investment strategies.
 
 ### Definition of "done"</span>
-- <span style="color:red;">[ _ ]</span> The market model and the investment model were successfully converted to object-oriented models
+- <span style="color:green;">[x]</span> The market model and the investment model were successfully converted to object-oriented models
 
 #### Example of possible class implementation
 
@@ -92,7 +92,7 @@ The objective of the second sprint is, thanks to the use of object-oriented prog
         "fppsr": "array(double)" //fppsr = funding percentage per share risk
     }
 
-- <span style="color:red;">[ _ ]</span> The simulations were correctly interconnected, i.e., there is a cause-effect relationship between purchases and market values: for example, if many wallets buy the same share, this share is affected by this in the form of a rise in its value.
+- <span style="color:green;">[x]</span> The simulations were correctly interconnected, i.e., there is a cause-effect relationship between purchases and market values: for example, if many wallets buy the same share, this share is affected by this in the form of a rise in its value.
 
 This can be done, for example, by inserting as input of the simulation a new object with information on the number of purchases for each share, and using this information to modify the fluctuations of the shares.
 
