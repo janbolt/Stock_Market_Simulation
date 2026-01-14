@@ -18,7 +18,7 @@ struct InputValues {
     std::vector<double> expected_return = {0.10, 0.05, 0.2, 0.25}; // per year
     std::vector<double> initial_value = {10.34, 1.92, 5.23, 4.01}; // value of stock when purchased
     int time_steps = 252*1; // number of days, for n years -> 252 * n
-    int model = 1; // 1 for markov chain with EMA. 2 for geometric brownian motion
+    int model = 2; // 1 for markov chain with EMA. 2 for geometric brownian motion
 
     void print() const;
 };

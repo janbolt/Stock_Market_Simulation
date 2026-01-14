@@ -226,16 +226,17 @@ std::vector<std::vector<double>> simulate_stocks_with_wallets(double years, int 
     
     for (int i = 1; i <= N; ++i) {
 
-        double variance = share.variance[i];
-        double expected_return = share.expected_return[i];  
+
               
         for (int w = 0; w < wallet.name.size(); w++){
-            wallet_histories[w][i] = 0;
             for (int s = 0; s < share.name.size(); s++){
                 if (i == 1){
                     // initialize stock prices:
                     all_stock_prices_histories[s][i-1] = share.initial_value[s];
+                    wallet_histories[w][i-1] += share.initial_value[s] * wallet.units[w][s];
                 }                
+                double variance = share.variance[s];
+                double expected_return = share.expected_return[s];  
                 all_stock_prices_histories[s][i] = geometric_brownian_motion_one_iteration(all_stock_prices_histories[s][i-1], variance, years, expected_return);
                 
                 wallet_histories[w][i] += all_stock_prices_histories[s][i] * wallet.units[w][s];
@@ -246,6 +247,88 @@ std::vector<std::vector<double>> simulate_stocks_with_wallets(double years, int 
     return wallet_histories;
 }
 
+
+void simulate_all_wallets() {
+    InputValues in;
+    Wallet wallet;
+    Share share;
+    std::map<std::string, std::vector<double>> data;
+    double years = in.time_steps / 252.0;
+    double total_profit = 0.0;
+
+    strategy(in);
+    
+    in.fund = 0;
+    for (int f = 0; f < wallet.units.size(); f++){
+        for (int h = 0; h < share.name.size(); h++){
+            in.fund += wallet.units[f][h]*share.initial_value[h];
+        }
+    }
+    std::cout << in.fund << std::endl;
+
+    std::vector<std::vector<double>> wallet_histories =  simulate_stocks_with_wallets(years, 2);
+    std::vector<double> sum_of_stock_shares(wallet_histories[0].size());
+
+    for (int wh = 0; wh < wallet_histories.size(); wh++){
+        for (int i = 0; i < wallet_histories[wh].size(); i++){
+            sum_of_stock_shares[i] += wallet_histories[wh][i];
+        }
+        data[wallet.name[wh]] = wallet_histories[wh];
+    }
+
+    data[" Total Capital"] = sum_of_stock_shares;
+
+    std::vector<double> profit_of_stock_shares = sum_of_stock_shares;
+
+    for (size_t j = 0; j < sum_of_stock_shares.size(); ++j) {
+        sum_of_stock_shares[j] = (sum_of_stock_shares[j]-in.fund)/in.fund * 100;
+        profit_of_stock_shares[j] -=in.fund;
+    }
+
+    data[" Profit (€)"] = profit_of_stock_shares;
+    data[" Profit (%)"] = sum_of_stock_shares;
+
+    // Calculate profit
+    double final_value = 0.0;
+    for (auto& entry : data) {
+        final_value += entry.second.back();
+    }
+    total_profit = final_value - in.fund;
+
+    // Write output to CSV file
+    std::ofstream output_file("output.csv");
+    output_file << "Time,";
+    for (const auto& entry : data) {
+        output_file << entry.first << ",";
+    }
+    // output_file << "Profit (€),Profit (%)\n";
+
+    // Find the maximum number of simulation steps
+    size_t max_steps = 0;
+
+        for (const auto& entry : data) {
+        max_steps = std::max(max_steps, entry.second.size());
+    }
+    output_file << "\n";  
+
+    // Write time steps and corresponding stock values
+    for (size_t step = 0; step < max_steps; ++step) {
+        output_file << step << ",";
+        for (const auto& entry : data) {
+            if (step < entry.second.size())
+                output_file << entry.second[step] << ",";
+            else
+                output_file << "0,";  
+        }
+        
+        // output_file << total_profit << ",";
+        // output_file << (total_profit / in.fund) * 100 << "\n";  
+        output_file << "\n";  
+
+    }
+
+    output_file.close(); 
+}
 
 void simulate_wallet() {
     InputValues in;
@@ -329,6 +412,6 @@ void simulate_wallet() {
 }
 
 int main() {
-    simulate_wallet(); 
+    simulate_all_wallets(); 
     return 0;
 }
