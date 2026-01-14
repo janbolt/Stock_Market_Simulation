@@ -100,7 +100,7 @@ The **fund** represents the total invested capital in euros (€) across all sha
 ---
 
 ## Strategies
-There are a total of **four investment strategies**:
+There are a total of **three investment strategies**:
 
 ### Strategy 1: Uniform Distribution
 This strategy implements a uniform distribution across all shares for effective diversification.

@@ -1,16 +1,5 @@
 # TODO List for Project Stock Market Simulation
 
-<!-- # Sprint 1 -->
-
-<!-- 
-## Features
-- [ ] Implement user authentication #todo
-- [x] Design database schema #done
-
-## Bugs
-- [ ] Fix issue with login timeout #in-progress -->
-
-
 ## Sprint 1
 In the first sprint, at the beginning of the simulation, the wallets will be initialized with a limited amount of market shares. The market will evolve and modify the amount of money in the wallets. In this phase, it will be possible to choose between two types of investment 'strategies', a low-risk/low-return strategy and a high-risk strategy with more chance of higher income.
 
@@ -60,14 +49,13 @@ The listed tasks are not strictly required for the assignment/sprint!
 - <span style="color:orange;">[ _ ]</span> Allow users to give direct inputs eather in the form of a seperate .json file or using input statetements during runtime.
 - <span style="color:orange;">[ _ ]</span> Replace CSV file by json file to store outputs.
 - <span style="color:orange;">[ _ ]</span> A function to visualize the plots (by using matplotlib as an example).
-<!-- - <span style="color:orange;">[ _ ]</span> 
-- <span style="color:orange;">[ _ ]</span>
-- <span style="color:orange;">[ _ ]</span> -->
+
 
 ## Sprint 2
 The objective of the second sprint is, thanks to the use of object-oriented programming, to create different classes for shares, wallets, strategies.Through this code refactoring, it will be possible to create interactions between the market simulation and the wallets simulation. A massive shares purchase in the market will consequentially change the value of the shares themselves. The statistical data concerning the recent market fluctuations and the quotes will be registered, and they can be utilized in the single investment strategies.
 
 ### Definition of "done"</span>
+
 - <span style="color:green;">[x]</span> The market model and the investment model were successfully converted to object-oriented models
 
 #### Example of possible class implementation
