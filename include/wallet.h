@@ -8,10 +8,10 @@ class Wallet {
 public:
     // in each vector at position i we have another wallet in units Wallet.units[i][j] we access amount of shares for share i -> i representing share_id
     std::vector<std::string> name = {"John", "Nick", "Sandra"};
-    std::vector<double> cash_savings = {1000, 8987, 9829};
+    std::vector<double> cash_savings = {1000, 1000, 1000};
     std::vector<std::vector<double>> units = {{10,10,10,10}, {5,10,4,5},{0, 100,40,50}};   
     std::vector<int> strategy_id = {3,2,1};
-    std::vector<int> trading_frequency = {252, 48, 90}; // amount of days where a trade was executed in a year
+    std::vector<int> trading_frequency = {12, 3, 90}; // amount of days where a trade was executed in a year
     // std::vector<double> monthly_savings_plan = {100, 1000, 2000}; // monthly investments while there is enough cash savings -> allocation according to strategies
 
     void print() const;

@@ -12,6 +12,8 @@
 #include <cmath>
 #include <numeric>
 #include <utility> // return two values from a function 
+#include <chrono>
+
 
 void strategy(InputValues &in) {
     std::map<std::string, std::vector<double>> data;
@@ -80,6 +82,72 @@ void strategy(InputValues &in) {
     }
 }
 
+void initialize_strategy(int w) {
+    std::map<std::string, std::vector<double>> data;
+
+    Wallet wallet;
+    Share share;
+
+    // Count the total number of entries in in.shares
+    int total_number_of_shares = static_cast<int>(wallet.name.size());
+    int strategy = wallet.strategy_id[w];
+    if (strategy == 1) {
+        // Uniform distribution:
+        double distribution = 1.0 / total_number_of_shares; // Ensure double precision
+        wallet.units[w].resize(total_number_of_shares, distribution); // Fill vector with 'distribution'
+
+    }
+
+    if (strategy == 2) {
+        // Conservative minimize risk:
+        // std::vector<double> variance = {0.04, 0.035, 0.03, 0.045}; // per year
+
+        std::vector<double> inv_var(share.variance.size()); // Initialize with the same size
+
+        for (size_t i = 0; i < share.variance.size(); ++i) {
+            if (share.variance[i] != 0) { 
+                inv_var[i] = 1.0 / share.variance[i];
+            } else {
+                std::cerr << "Warning: Variance at index " << i << " is zero; setting inverse to zero." << std::endl;
+                inv_var[i] = 0.0; 
+            }
+        }
+        double sum = std::accumulate(inv_var.begin(), inv_var.end(), 0.0);
+        
+        // Prevent division by zero
+        if (sum != 0) {
+            double norm = 1.0 / sum;
+            wallet.units[w].clear();
+            wallet.units[w].resize(inv_var.size()); 
+
+            for (size_t i = 0; i < inv_var.size(); ++i) {
+                wallet.units[w][i] = inv_var[i] * norm; 
+        }
+        } 
+        else{
+            std::cerr << "Error: The sum of the variance values is zero. Unable to normalize allocations." << std::endl;
+        }
+        }
+    
+
+    if (strategy == 3) {
+    // Potential high risk, optimize by expected return, could be part of a long term investment strategy:
+    double sum = std::accumulate(share.expected_return.begin(), share.expected_return.end(), 0.0);
+    
+        // Prevent division by zero
+        if (sum != 0) {
+            double norm = 1.0 / sum;
+            wallet.units[w].clear(); // Clear previous allocations
+            wallet.units[w].resize(share.expected_return.size()); // Resize the vector to hold new values
+
+                for (size_t i = 0; i < share.expected_return.size(); ++i) {
+                    wallet.units[w][i] = share.expected_return[i] * norm; // Multiply each element by the normalization factor
+                }
+        } else{
+            std::cerr << "Error: The sum of the expected return values is zero. Unable to normalize allocations." << std::endl;
+        }
+    }
+}
 
 // Function to compute the error function's inverse
 double erfinv(double x) {
@@ -98,6 +166,7 @@ double erfinv(double x) {
 double norminv(double p, double mu, double sigma) {
     return mu + sigma * sqrt(2) * erfinv(2 * p - 1);
 }
+
 
 
 // The following source was used for the geometric brownian motion simulation:
@@ -221,18 +290,32 @@ std::pair<std::vector<double>, double> generate_allocation(int i, int w){
 
     int strategy = wallet.strategy_id[w];
 
-    std::default_random_engine generator;
-    std::uniform_real_distribution<double> uniform_dist(-1.0, 1.0);
-    double decision = uniform_dist(generator);
+
+    std::default_random_engine generator(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count()));
+
+    std::normal_distribution<double> normal_dist(market.market_optimisim, 0.1);
+
+    // Generate a random value from the normal distribution
+    double decision;
+    do {
+        decision = normal_dist(generator);
+    } while (decision < -1.0 || decision > 1.0);  // Discard if outside the interval [-1, 1]
 
     std::uniform_real_distribution<double> decision_to_trade_dist(0, 252);
     double decision_to_trade = decision_to_trade_dist(generator);
-    if (decision_to_trade < wallet.trading_frequency[w]) decision_to_trade = 0;
+
+    if (decision_to_trade > wallet.trading_frequency[w]) {
+        decision_to_trade = 0;
+    } else {
+        decision_to_trade = 1;
+    }
 
     decision = (decision + market.market_optimisim) / 2.0 * decision_to_trade;
 
     if (decision < -1) decision = -1;
     if (decision > 1) decision = 1;
+
+    // std::cout << decision << std::endl;
 
     double investment_unweighted = decision * wallet.cash_savings[w];
     std::vector<double> allocation(share.name.size());
@@ -293,11 +376,22 @@ std::pair<std::vector<double>, double> generate_allocation(int i, int w){
         }
     }
 
+    wallet.cash_savings[w] += investment_unweighted;
+    // if (investment_unweighted != investment){
+    //     std::cout << (investment_unweighted) << std::endl;
+    // }
+    // int number;
+    // std::cout << (investment) << std::endl;
+    // std::cout << (investment_unweighted) << std::endl;
+    // std::cout << wallet.name[w] << std::endl;
+    // std::cin >> number;
+    
     return {allocation, investment_unweighted};
 }
 
 // Function to simulate stock prices directly
-std::pair<std::vector<std::vector<double>>, std::vector<double>> simulate_stocks_with_wallets(double years, int model) {
+std::tuple<std::vector<std::vector<double>>, std::vector<double>,std::vector<std::vector<double>>,std::vector<std::vector<double>>> 
+simulate_stocks_with_wallets(double years, int model) {
     Wallet wallet; 
     Share share;
     Market market;
@@ -319,35 +413,70 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> simulate_stocks
         }
     }
     std::vector<double> fund(N + 1);
-    std::fill(fund.begin(), fund.end(), start_fund);
-    for (int i = 1; i <= N; ++i) {  
+    fund[0] = start_fund;
 
+    std::vector<std::vector<double>> all_variances(share.name.size(), std::vector<double>(N + 1));
+    std::vector<std::vector<double>> all_expected_returns(share.name.size(), std::vector<double>(N + 1));
+    
+    std::vector<double> first_var = share.variance;;
+    std::vector<double> first_ret = share.expected_return;
+                 
+    for (int i = 1; i <= N; ++i) {  
         for (int w = 0; w < wallet.name.size(); w++){
 
             //  this part is in this loop since every wallet has different news and emotional responses to buying or selling. 
 
-            // auto [allocations, investment] =  generate_allocation(i,w);
+            auto [allocations, investment] =  generate_allocation(i,w);
+            // double investment = std::accumulate(allocations.begin(), allocations.end(), 0.0); 
 
-            // units_per_timestep[i][w] = units_per_timestep[i][w];
+            fund[i] = fund[i-1];        
+
             for (int s = 0; s < share.name.size(); s++){
                 if (i == 1){
                     // initialize stock prices:
                     all_stock_prices_histories[s][i-1] = share.initial_value[s];
-                    wallet_histories[w][i-1] += share.initial_value[s] * wallet.units[w][s];              // * units_per_timestep[i-1][w][s];
-                }                
-                double variance = share.variance[s];
-                double expected_return = share.expected_return[s];  
-                all_stock_prices_histories[s][i] = geometric_brownian_motion_one_iteration(all_stock_prices_histories[s][i-1], variance, years, expected_return);
+                    wallet_histories[w][i-1] += share.initial_value[s] * units_per_timestep[i-1][w][s]; // wallet.units[w][s]; // units_per_timestep[i-1][w][s];
+
+                    all_variances[s][i-1] = share.variance[s] - first_var[s];
+                    all_expected_returns[s][i-1] = share.expected_return[s] - first_ret[s];
+                }   
                 
-                wallet_histories[w][i] += all_stock_prices_histories[s][i] * wallet.units[w][s]; //* units_per_timestep[i][w][s];   
+                // share.variance[s] += (investment/fund[i]-share.variance[s])/1000; 
+                // share.expected_return[s] += (investment/fund[i]/10);  
+
+                share.variance[s] = share.variance[s]-(investment/fund[i]-share.variance[s])*1e-5; 
+                share.expected_return[s] = share.expected_return[s]-(investment/fund[i])*1e-2; 
+
+                // std::cout << std::abs(investment/fund[i]/1000) << std::endl;
+                // std::cout << std::abs(investment/fund[i]/10) << std::endl;
+
+                all_variances[s][i] = share.variance[s] - first_var[s];
+                all_expected_returns[s][i] = share.expected_return[s] - first_ret[s];
+
+                all_stock_prices_histories[s][i] = geometric_brownian_motion_one_iteration(all_stock_prices_histories[s][i-1], share.variance[s], years, share.expected_return[s]);
+
+                units_per_timestep[i][w][s] = allocations[s]/all_stock_prices_histories[s][i] + units_per_timestep[i-1][w][s];
+
+                if (units_per_timestep[i][w][s] < 0){
+                    // fund[i] += (units_per_timestep[i][w][s])* all_stock_prices_histories[s][i];
+                    units_per_timestep[i][w][s] = units_per_timestep[i-1][w][s]; // trade cannot be made not enough stocks
+                    int number;
+
+                } else{
+                    fund[i] += allocations[s];
+                }
+
+                if (investment > wallet.cash_savings[w]){
+                    std::cerr << "Error: not enough cash to buy" << std::endl;
+                }
+                wallet_histories[w][i] += all_stock_prices_histories[s][i] * units_per_timestep[i][w][s];   // * wallet.units[w][s]; // units_per_timestep[i][w][s];   
             }
         }
         // change variance
         // chagne expected values
-
     }  
     
-    return {wallet_histories, fund};
+    return {wallet_histories, fund, all_variances, all_variances};
 }
 
 
@@ -367,7 +496,12 @@ void simulate_all_wallets() {
     // }
     // std::cout << fund << std::endl;
 
-    auto [wallet_histories, fund] = simulate_stocks_with_wallets(years, 2);
+    // initialize:
+    for (int w = 0; w < wallet.name.size(); w++){
+        initialize_strategy(w);
+    }
+
+    auto [wallet_histories, fund, all_variances, all_expected_returns] = simulate_stocks_with_wallets(years, 2);
     std::vector<double> sum_of_stock_shares(wallet_histories[0].size());
 
     for (int wh = 0; wh < wallet_histories.size(); wh++){
@@ -377,7 +511,7 @@ void simulate_all_wallets() {
         data[wallet.name[wh]] = wallet_histories[wh];
     }
 
-    data[" Total Capital"] = sum_of_stock_shares;
+    data[" Total Stock Value"] = sum_of_stock_shares;
 
     std::vector<double> profit_of_stock_shares = sum_of_stock_shares;
 
@@ -388,7 +522,12 @@ void simulate_all_wallets() {
 
     data[" Profit (€)"] = profit_of_stock_shares;
     data[" Profit (%)"] = sum_of_stock_shares;
+    data[" Total Investment"] = fund;
 
+    for (int s = 0; s < share.name.size();s++){
+        data["var " + share.name[s]] = all_variances[s];
+        data["ret " + share.name[s]] = all_expected_returns[s];
+    }
     // Calculate profit
     double final_value = 0.0;
     for (auto& entry : data) {
