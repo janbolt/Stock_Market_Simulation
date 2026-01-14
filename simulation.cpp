@@ -1,4 +1,7 @@
 #include "include/simulation.h" 
+#include "include/wallet.h"
+#include "include/share.h" 
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -209,17 +212,38 @@ std::vector<double> simulate_stock(double initial_value, double variance, double
 }
 
 // Function to simulate stock prices directly
-std::vector<double> simulate_stocks_with_wallets(double initial_value, double variance, double expected_return, double years, int model, Wallets &wallets) {
-    
+std::vector<std::vector<double>> simulate_stocks_with_wallets(double years, int model) {
+    InputValues in;
+    Wallet wallet; 
+    Share share;
+
     double dt = 1.0 / 252.0;                     
     int N = static_cast<int>(years / dt + 1);
 
-    std::vector<double> S(N + 1);
-
+    std::vector<double> stock_price_history(N + 1);
+    std::vector<std::vector<double>> all_stock_prices_histories(share.name.size(), std::vector<double>(N + 1, 0));
+    std::vector<std::vector<double>> wallet_histories(wallet.name.size(), std::vector<double>(N + 1, 0));
+    
     for (int i = 1; i <= N; ++i) {
-        S[i] = geometric_brownian_motion_one_iteration(S[i-1], variance, years, expected_return);
-    }    
 
+        double variance = share.variance[i];
+        double expected_return = share.expected_return[i];  
+              
+        for (int w = 0; w < wallet.name.size(); w++){
+            wallet_histories[w][i] = 0;
+            for (int s = 0; s < share.name.size(); s++){
+                if (i == 1){
+                    // initialize stock prices:
+                    all_stock_prices_histories[s][i-1] = share.initial_value[s];
+                }                
+                all_stock_prices_histories[s][i] = geometric_brownian_motion_one_iteration(all_stock_prices_histories[s][i-1], variance, years, expected_return);
+                
+                wallet_histories[w][i] += all_stock_prices_histories[s][i] * wallet.units[w][s];
+            }
+        }
+    }  
+    
+    return wallet_histories;
 }
 
 

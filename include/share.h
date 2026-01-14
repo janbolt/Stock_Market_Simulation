@@ -7,22 +7,21 @@
 
 class Share {
 public:
-    std::string name;
-    int share_id,
-    double initial_value;
-    double variance;
-    double price_change;
-    double expected_return;
+    std::vector<std::string> name = {"Google", "Amazon", "Tesla", "Ferrero"}; 
+    std::vector<double> initial_value = {10.34, 1.92, 5.23, 4.01};
+    std::vector<double> variance  = {0.04, 0.035, 0.03, 0.045}; 
+    std::vector<double> price_change = {0,0,0,0}; 
+    std::vector<double> expected_return = {0.10, 0.05, 0.2, 0.25}; 
 
-    Share(std::string n, int i, double s, double v, double p, double e) 
-        : name(n), 
-          share_id(i),
-          initial_value(s), 
-          variance(v),   
-          price_change(p), 
-          expected_return(e) 
-    {}
-
+    // Share(const std::vector<std::string>& n,
+    //       const std::vector<double>& i, const std::vector<double>& v,
+    //       const std::vector<double>& p, const std::vector<double>& e)
+    //     : name(n),
+    //       initial_value(1), 
+    //       variances(v), 
+    //       price_change(p), 
+    //       expected_return(e) 
+    // {}
 };
 
-#endif
+#endif // SHARE_H
