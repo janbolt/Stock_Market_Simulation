@@ -209,7 +209,7 @@ std::vector<double> simulate_stock(double initial_value, double variance, double
 }
 
 // Function to simulate stock prices directly
-std::vector<double> simulate_stocks_with_wallets(double initial_value, double variance, double expected_return, double years, int model, ) {
+std::vector<double> simulate_stocks_with_wallets(double initial_value, double variance, double expected_return, double years, int model, Wallets &wallets) {
     
     double dt = 1.0 / 252.0;                     
     int N = static_cast<int>(years / dt + 1);
